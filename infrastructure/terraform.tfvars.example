@@ -1,2 +1,13 @@
 project_name        = "dc-absolute-data-pipeline"
 aws_region          = "us-east-1"
+
+api_key             = "<COMIC VINE API KEY>"
+
+s3_bronze_bucket              = "dc-absolute-data-pipeline-bronze-<suffix>"
+s3_silver_bucket              = "dc-absolute-data-pipeline-silver-<suffix>"
+s3_gold_bucket                = "dc-absolute-data-pipeline-gold-<suffix>"
+athena_query_results_bucket   = "dc-absolute-data-pipeline-athena-results-<suffix>"
+
+# Find the right ARN for your region at https://aws-sdk-pandas.readthedocs.io/en/stable/layers.html
+aws_wrangler_layer_arn                     = "arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python311:31"
+lambda_function_name_fetch_volumes       = "dc-absolute-fetch-volumes"
