@@ -67,7 +67,7 @@ def write_json_to_s3(bucket: str, key: str, body: dict) -> None:
     s3_client.put_object(
         Bucket=bucket,
         Key=key,
-        Body=json.dumps(body, ensure_ascii=False),
+        Body=json.dumps(body, ensure_ascii=False, indent=2),
         ContentType="application/json",
     )
 
@@ -113,7 +113,7 @@ def lambda_handler(event, context):
         # )
         # write_json_to_s3(bucket=BUCKET, key=s3_key, body=response_json)
         # s3_objects.append(s3_key)
-        
+
         for volume in response_json["results"]:
             publisher_name = volume["publisher"]["name"]
             start_year = int(volume["start_year"])
@@ -149,8 +149,9 @@ def lambda_handler(event, context):
             "min_start_year": 2024,
             "excluded_names": ["Absolute Power"]
         },
-        "raw_objects": s3_objects,
+        #"raw_objects": s3_objects,
         "api_calls": api_calls,
+        "total_results": total_results,
         "volume_count": len(all_filtered_volumes),
         "volume_ids": [v["id"] for v in all_filtered_volumes]
     }
