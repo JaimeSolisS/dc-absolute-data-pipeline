@@ -66,6 +66,11 @@ variable "lambda_function_name_detect_changed_issues" {
     type        = string
 }
 
+variable "lambda_function_name_fetch_changed_issues_details" {
+    description = "Name of the Lambda function that fetches details for changed issue data"
+    type        = string
+}
+
 variable "athena_database_name" {
   description = "Name of the Athena database"
   type        = string

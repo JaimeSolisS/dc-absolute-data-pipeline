@@ -111,3 +111,30 @@ resource "aws_lambda_function" "detect_changed_issues" {
     }
   }
 }
+
+data "archive_file" "fetch_changed_issues_details" {
+  type        = "zip"
+  source_dir  = "${path.module}/lambdas/fetch_changed_issues_details"
+  output_path = "${path.module}/lambdas/zips/fetch_changed_issues_details.zip"
+}
+
+# Lambda function — awswrangler and pandas are provided via the managed layer
+resource "aws_lambda_function" "fetch_changed_issues_details" {
+  function_name    = var.lambda_function_name_fetch_changed_issues_details
+  role             = aws_iam_role.lambda_exec.arn # shared role defined in iam.tf
+  runtime          = "python3.11"
+  handler          = "lambda_function.lambda_handler"
+  timeout          = 900
+  memory_size      = 512
+  filename         = data.archive_file.fetch_changed_issues_details.output_path
+  source_code_hash = data.archive_file.fetch_changed_issues_details.output_base64sha256
+  
+  layers = [var.aws_wrangler_layer_arn]
+
+  environment {
+    variables = {
+      API_KEY    = var.api_key
+      BUCKET_BRONZE = var.s3_bronze_bucket
+    }
+  }
+}
