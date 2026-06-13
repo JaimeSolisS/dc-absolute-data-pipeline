@@ -1,0 +1,141 @@
+{
+    "Comment": "DC Absolute Universe data pipeline",
+    "QueryLanguage": "JSONata",
+    "StartAt": "Fetch Volumes",
+    "States": {
+        "Fetch Volumes": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Output": "{% $states.result.Payload %}",
+            "Arguments": {
+                "Payload": "{% $states.input %}",
+                "FunctionName": "${fetch_volumes_arn}:$LATEST"
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2,
+                    "JitterStrategy": "FULL"
+                }
+            ],
+            "Next": "Check Changed Volumes"
+        },
+        "Check Changed Volumes": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Output": "{% $states.result.Payload %}",
+            "Arguments": {
+                "Payload": "{% $states.input %}",
+                "FunctionName": "${detect_changed_volumes_arn}:$LATEST"
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2,
+                    "JitterStrategy": "FULL"
+                }
+            ],
+            "Next": "Are Changed Volumes?"
+        },
+        "Are Changed Volumes?": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Next": "No Changes",
+                    "Condition": "{% $states.input.changed_volume_count = 0 %}"
+                }
+            ],
+            "Default": "Fetch Issues"
+        },
+        "Fetch Issues": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Output": "{% $states.result.Payload %}",
+            "Arguments": {
+                "Payload": "{% $states.input %}",
+                "FunctionName": "${fetch_issues_for_changed_volumes_arn}:$LATEST"
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2,
+                    "JitterStrategy": "FULL"
+                }
+            ],
+            "Next": "Check Changed Issues"
+        },
+        "Check Changed Issues": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Output": "{% $states.result.Payload %}",
+            "Arguments": {
+                "Payload": "{% $states.input %}",
+                "FunctionName": "${detect_changed_issues_arn}:$LATEST"
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2,
+                    "JitterStrategy": "FULL"
+                }
+            ],
+            "Next": "Are Changed Issues?"
+        },
+        "Are Changed Issues?": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Next": "No Changes",
+                    "Condition": "{% $states.input.changed_issue_count = 0 %}"
+                }
+            ],
+            "Default": "Fetch Issues Details"
+        },
+        "Fetch Issues Details": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Output": "{% $states.result.Payload %}",
+            "Arguments": {
+                "Payload": "{% $states.input %}",
+                "FunctionName": "${fetch_changed_issues_details_arn}:$LATEST"
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2,
+                    "JitterStrategy": "FULL"
+                }
+            ],
+            "Next": "Bronze to Silver"
+        },
+        "Bronze to Silver": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::glue:startJobRun.sync",
+            "Arguments": {
+                "JobName": "${glue_job_name}",
+                "Arguments": {
+                    "--run_id": "{% $states.input.run_id %}",
+                    "--ingestion_date": "{% $states.input.ingestion_date %}",
+                    "--volumes_key": "{% $states.input.volumes_key %}",
+                    "--issues_key": "{% $states.input.issues_key %}",
+                    "--issue_details_key": "{% $states.input.issue_details_key %}"
+                }
+            },
+            "End": true
+        },
+        "No Changes": {
+            "Type": "Pass",
+            "End": true
+        }
+    }
+}

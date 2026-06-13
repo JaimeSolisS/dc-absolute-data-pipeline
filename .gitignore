@@ -2,7 +2,7 @@
 .python-version
 .venv
 *.csv
-*.json
+samples/
 **/.terraform/
 *.tfstate
 *.tfstate.backup
