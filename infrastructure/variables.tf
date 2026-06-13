@@ -40,6 +40,12 @@ variable "athena_query_results_bucket" {
   type        = string
 }
 
+variable "glue_scripts_bucket" {
+  description = "S3 bucket for Glue scripts"
+  type        = string
+}
+
+
 variable "aws_wrangler_layer_arn" {
   description = "ARN of the AWS SDK for Pandas (awswrangler) Lambda layer."
   type        = string
@@ -78,5 +84,15 @@ variable "athena_database_name" {
 
 variable "step_function_name" {
   description = "Name of the Step Functions state machine for the ingestion pipeline"
+  type        = string
+}
+
+variable "glue_job_name" {
+  description = "Name of the Glue job that transforms bronze data to silver Iceberg tables"
+  type        = string
+}
+
+variable "glue_warehouse_path" {
+  description = "S3 path used as the Iceberg warehouse root (e.g. s3://bucket/warehouse/)"
   type        = string
 }

@@ -113,3 +113,36 @@ resource "aws_glue_catalog_table" "control_issue_state" {
     }
   }
 }
+
+# Upload Glue job script to S3; re-uploads automatically when the file changes
+resource "aws_s3_object" "glue_job_script" {
+  bucket       = aws_s3_bucket.glue_scripts.bucket
+  key          = "glue_jobs/bronze_to_silver.py"
+  source       = "${path.module}/glue_jobs/bronze_to_silver.py"
+  source_hash  = filemd5("${path.module}/glue_jobs/bronze_to_silver.py")
+  content_type = "text/x-python"
+}
+
+resource "aws_glue_job" "bronze_to_silver" {
+  name     = var.glue_job_name
+  role_arn = aws_iam_role.glue_exec.arn
+
+  glue_version      = "4.0"
+  worker_type       = "G.1X"
+  number_of_workers = 2
+  
+  command {
+    name            = "glueetl"
+    script_location = "s3://${aws_s3_object.glue_job_script.bucket}/${aws_s3_object.glue_job_script.key}"
+    python_version  = "3"
+  }
+
+  # Static args baked into the job; run-specific args (keys, run_id) come from Step Functions
+  default_arguments = {
+    "--enable-glue-datacatalog" = "true"
+    "--datalake-formats"        = "iceberg"
+    "--bronze_bucket"           = var.s3_bronze_bucket
+    "--database"                = var.athena_database_name
+    "--warehouse_path"          = var.glue_warehouse_path
+  }
+}

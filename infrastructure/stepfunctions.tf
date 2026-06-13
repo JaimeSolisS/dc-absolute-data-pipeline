@@ -32,6 +32,25 @@ resource "aws_iam_role_policy" "sfn_invoke_lambda" {
   })
 }
 
+resource "aws_iam_role_policy" "sfn_start_glue_job" {
+  name = "${var.project_name}-sfn-start-glue-job"
+  role = aws_iam_role.sfn_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "glue:StartJobRun",
+        "glue:GetJobRun",
+        "glue:GetJobRuns",
+        "glue:BatchStopJobRun",
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
 resource "aws_sfn_state_machine" "absolute_data_pipeline" {
   name     = var.step_function_name
   role_arn = aws_iam_role.sfn_exec.arn
@@ -42,5 +61,6 @@ resource "aws_sfn_state_machine" "absolute_data_pipeline" {
     fetch_issues_for_changed_volumes_arn   = aws_lambda_function.fetch_issues_for_changed_volumes.arn
     detect_changed_issues_arn              = aws_lambda_function.detect_changed_issues.arn
     fetch_changed_issues_details_arn       = aws_lambda_function.fetch_changed_issues_details.arn
+    glue_job_name                          = aws_glue_job.bronze_to_silver.name
   })
 }
