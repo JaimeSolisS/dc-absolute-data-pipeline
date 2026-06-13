@@ -9,8 +9,20 @@ from pyspark.sql.functions import (
     to_date,
     sha2,
     concat_ws,
-    expr
+    expr,
+    from_json,
+    to_json,
 )
+from pyspark.sql.types import ArrayType, StructType, StructField, StringType
+
+# Schema used to normalise credit arrays after JSON inference.
+# to_json → from_json forces the correct element type whether Spark inferred
+# array<struct<...>> (populated) or array<string> (all-empty arrays).
+_credit_schema      = ArrayType(StructType([StructField("name", StringType())]))
+_person_credit_schema = ArrayType(StructType([
+    StructField("name", StringType()),
+    StructField("role", StringType()),
+]))
 
 
 args = getResolvedOptions(
@@ -248,7 +260,17 @@ WHEN NOT MATCHED THEN INSERT *
 # File structure: {"issue_details": [{issue_id, volume_id, fetched_at, raw_detail: {...}}]}
 raw_details_df = spark.read.option("multiline", "true").json(issue_details_path)
 
-details_df = raw_details_df.selectExpr("explode(issue_details) as d").select(
+# Normalise credit arrays: to_json → from_json forces the target schema regardless
+# of whether Spark inferred array<struct<...>> or array<string> (all-empty arrays).
+details_base_df = raw_details_df.selectExpr("explode(issue_details) as d") \
+    .withColumn("char_creds",    from_json(to_json(col("d.raw_detail.character_credits")), _credit_schema)) \
+    .withColumn("obj_creds",     from_json(to_json(col("d.raw_detail.object_credits")),   _credit_schema)) \
+    .withColumn("person_creds",  from_json(to_json(col("d.raw_detail.person_credits")),   _person_credit_schema)) \
+    .withColumn("team_creds",    from_json(to_json(col("d.raw_detail.team_credits")),     _credit_schema)) \
+    .withColumn("loc_creds",     from_json(to_json(col("d.raw_detail.location_credits")), _credit_schema)) \
+    .withColumn("concept_creds", from_json(to_json(col("d.raw_detail.concept_credits")),  _credit_schema))
+
+details_df = details_base_df.select(
     col("d.raw_detail.id").cast("bigint").alias("issue_id"),
     col("d.raw_detail.volume.id").cast("bigint").alias("volume_id"),
     col("d.raw_detail.volume.name").alias("volume_name"),
@@ -257,14 +279,14 @@ details_df = raw_details_df.selectExpr("explode(issue_details) as d").select(
     col("d.raw_detail.description").alias("description"),
     col("d.raw_detail.image.medium_url").alias("image_url"),
 
-    expr("transform(d.raw_detail.character_credits, x -> x.name)").alias("characters"),
-    expr("transform(d.raw_detail.object_credits, x -> x.name)").alias("objects"),
-    expr("transform(filter(d.raw_detail.person_credits, x -> lower(x.role) like '%writer%'), x -> x.name)").alias("writers"),
-    expr("transform(filter(d.raw_detail.person_credits, x -> lower(x.role) like '%artist%'), x -> x.name)").alias("artists"),
-    expr("transform(filter(d.raw_detail.person_credits, x -> lower(x.role) like '%colorist%'), x -> x.name)").alias("colorists"),
-    expr("transform(d.raw_detail.team_credits, x -> x.name)").alias("teams"),
-    expr("transform(d.raw_detail.location_credits, x -> x.name)").alias("locations"),
-    expr("transform(d.raw_detail.concept_credits, x -> x.name)").alias("concepts"),
+    expr("transform(char_creds,    x -> x.name)").alias("characters"),
+    expr("transform(obj_creds,     x -> x.name)").alias("objects"),
+    expr("transform(filter(person_creds, x -> lower(x.role) like '%writer%'),   x -> x.name)").alias("writers"),
+    expr("transform(filter(person_creds, x -> lower(x.role) like '%artist%'),   x -> x.name)").alias("artists"),
+    expr("transform(filter(person_creds, x -> lower(x.role) like '%colorist%'), x -> x.name)").alias("colorists"),
+    expr("transform(team_creds,    x -> x.name)").alias("teams"),
+    expr("transform(loc_creds,     x -> x.name)").alias("locations"),
+    expr("transform(concept_creds, x -> x.name)").alias("concepts"),
 
     col("d.raw_detail.site_detail_url").alias("site_detail_url"),
     col("d.raw_detail.api_detail_url").alias("api_detail_url"),
