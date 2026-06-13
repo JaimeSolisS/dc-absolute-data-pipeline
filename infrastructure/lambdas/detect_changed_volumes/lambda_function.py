@@ -4,7 +4,6 @@ import csv
 import time
 from io import StringIO
 from datetime import datetime
-
 import boto3
 
 

@@ -157,7 +157,7 @@ def lambda_handler(event, context):
     }
 
     manifest_key = (
-        f"bronze/comicvine/volumes/"
+        f"volumes/"
         f"ingestion_date={ingestion_date}/"
         f"run_id={run_id}/"
         f"manifest.json"
@@ -167,7 +167,7 @@ def lambda_handler(event, context):
     # Write filtered volumes to S3 — Step Functions has a 256 KB payload limit
     # so the next Lambda reads from this key instead of the state input
     volumes_key = (
-        f"bronze/comicvine/volumes/"
+        f"volumes/"
         f"ingestion_date={ingestion_date}/"
         f"run_id={run_id}/"
         f"filtered_volumes.json"
@@ -178,6 +178,7 @@ def lambda_handler(event, context):
                 "volume_id": v["id"],
                 "name": v["name"],
                 "api_detail_url": v["api_detail_url"],
+                "site_detail_url": v["site_detail_url"],
                 "date_last_updated": v["date_last_updated"],
                 "count_of_issues": v["count_of_issues"],
                 "last_issue_id": v.get("last_issue", {}).get("id")
@@ -190,7 +191,7 @@ def lambda_handler(event, context):
         "run_id": run_id,
         "ingestion_date": str(ingestion_date),
         "bronze_prefix": (
-            f"bronze/comicvine/volumes/"
+            f"volumes/"
             f"ingestion_date={ingestion_date}/"
             f"run_id={run_id}/"
         ),
