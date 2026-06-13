@@ -131,7 +131,7 @@ def lambda_handler(event, context):
                 "error":          str(exc),
             })
 
-        sleep(random.randint(2, 5))
+        sleep(random.randint(1, 3))
 
     # Write all fetched details into a single file
     issue_details_key = f"{output_prefix}issue_details.json"

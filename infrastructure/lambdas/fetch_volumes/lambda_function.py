@@ -134,7 +134,7 @@ def lambda_handler(event, context):
             break
 
         offset += limit
-        sleep(random.randint(2, 5))
+        sleep(random.randint(1, 3))
 
     # Write run manifest to Bronze for auditing and reprocessing
     manifest = {

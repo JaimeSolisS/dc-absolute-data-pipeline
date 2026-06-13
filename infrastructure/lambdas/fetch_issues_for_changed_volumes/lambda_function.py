@@ -102,7 +102,7 @@ def fetch_issues_for_volume(volume_id, api_key):
             break
 
         offset += LIMIT
-        sleep(random.randint(2, 5))
+        sleep(random.randint(1, 3))
 
     return all_issues, api_calls
 
@@ -145,7 +145,7 @@ def lambda_handler(event, context):
             "issues":      issues,
         })
 
-        sleep(random.randint(2, 5))
+        sleep(random.randint(1, 3))
 
     # Write all issues for this run into a single file
     issues_key = f"{issues_prefix}issues.json"
