@@ -44,17 +44,17 @@ HEADERS = {"User-Agent": "absolutePipeline"}
 s3_client = boto3.client("s3")
 
 
-def current_utc_datetime() -> datetime:
+def current_utc_datetime():
     return datetime.now(timezone.utc)
 
 
-def utc_timestamp_plus_uuid() -> str:
+def utc_timestamp_plus_uuid():
     """Returns a sortable unique ID: <YYYYMMDDTHHmmss>-<8-char hex>."""
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
     return f"{ts}-{uuid.uuid4().hex[:8]}"
 
 
-def call_comicvine_api(endpoint: str, params: dict) -> dict:
+def call_comicvine_api(endpoint, params):
     """GETs a ComicVine endpoint and returns the parsed JSON response."""
     url = BASE_URL + endpoint
     response = requests.get(url=url, params=params, headers=HEADERS)
@@ -62,7 +62,7 @@ def call_comicvine_api(endpoint: str, params: dict) -> dict:
     return response.json()
 
 
-def write_json_to_s3(bucket: str, key: str, body: dict) -> None:
+def write_json_to_s3(bucket, key, body) -> None:
     """Serializes body as JSON and writes it to s3://bucket/key."""
     s3_client.put_object(
         Bucket=bucket,

@@ -56,6 +56,11 @@ variable "lambda_function_name_detect_changed_volumes" {
     type        = string
 }
 
+variable "lambda_function_name_fetch_issues_for_changed_volumes" {
+    description = "Name of the Lambda function that fetches issues for changed volume data"
+    type        = string
+}
+
 variable "athena_database_name" {
   description = "Name of the Athena database"
   type        = string
