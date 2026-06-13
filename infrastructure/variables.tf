@@ -75,3 +75,8 @@ variable "athena_database_name" {
   description = "Name of the Athena database"
   type        = string
 }
+
+variable "step_function_name" {
+  description = "Name of the Step Functions state machine for the ingestion pipeline"
+  type        = string
+}
