@@ -30,6 +30,11 @@ variable "s3_gold_bucket" {
   type        = string
 }
 
+variable "s3_control_bucket" {
+  description = "S3 bucket for control data"
+  type        = string
+}
+
 variable "athena_query_results_bucket" {
   description = "S3 bucket for Athena query results"
   type        = string
@@ -44,4 +49,14 @@ variable "aws_wrangler_layer_arn" {
 variable "lambda_function_name_fetch_volumes" {
     description = "Name of the Lambda function that fetches volume data"
     type        = string
+}
+
+variable "lambda_function_name_detect_changed_volumes" {
+    description = "Name of the Lambda function that detects changed volume data"
+    type        = string
+}
+
+variable "athena_database_name" {
+  description = "Name of the Athena database"
+  type        = string
 }

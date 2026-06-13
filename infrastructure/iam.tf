@@ -40,7 +40,9 @@ resource "aws_iam_role_policy" "lambda_s3" {
           "arn:aws:s3:::${var.s3_gold_bucket}",
           "arn:aws:s3:::${var.s3_gold_bucket}/*",
           "arn:aws:s3:::${var.s3_bronze_bucket}",
-          "arn:aws:s3:::${var.s3_bronze_bucket}/*"
+          "arn:aws:s3:::${var.s3_bronze_bucket}/*",
+          "arn:aws:s3:::${var.s3_control_bucket}",
+          "arn:aws:s3:::${var.s3_control_bucket}/*"
         ]
       },
       {
@@ -49,7 +51,7 @@ resource "aws_iam_role_policy" "lambda_s3" {
           "s3:GetObject",
           "s3:PutObject",
           "s3:ListBucket",
-          "se3:DeleteObject",
+          "s3:DeleteObject",
           "s3:GetBucketLocation",
           "s3:AbortMultipartUpload",
           "s3:ListMultipartUploadParts"
