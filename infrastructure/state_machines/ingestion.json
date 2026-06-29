@@ -45,7 +45,7 @@
             "Type": "Choice",
             "Choices": [
                 {
-                    "Next": "No Changes",
+                    "Next": "Send Notification",
                     "Condition": "{% $states.input.changed_volume_count = 0 %}"
                 }
             ],
@@ -93,7 +93,7 @@
             "Type": "Choice",
             "Choices": [
                 {
-                    "Next": "No Changes",
+                    "Next": "Send Notification",
                     "Condition": "{% $states.input.changed_issue_count = 0 %}"
                 }
             ],
@@ -151,10 +151,6 @@
                     "JitterStrategy": "FULL"
                 }
             ],
-            "End": true
-        },
-        "No Changes": {
-            "Type": "Pass",
             "End": true
         }
     }

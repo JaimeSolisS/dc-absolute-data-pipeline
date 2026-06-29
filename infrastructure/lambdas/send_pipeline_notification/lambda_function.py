@@ -79,15 +79,9 @@ def build_html(run_id, ingestion_date, volumes, new_issues, banner_url):
             <span style='color:#777;font-size:11px'>{store_date}</span>
         </div>"""
 
-    return f"""<!DOCTYPE html>
-<html>
-<body style='font-family:Arial,sans-serif;color:#222;max-width:800px;margin:auto;padding:20px'>
-  <h2 style='color:#1a1a2e'>DC Absolute Pipeline — Run Complete</h2>
-  <p style='color:#555'>Run ID: <code>{run_id}</code> &nbsp;|&nbsp; Date: {ingestion_date}</p>
-  <div style='text-align:center;margin-bottom:16px'>
-    <img src='{banner_url}' alt='DC Absolute' style='max-width:100%;border-radius:6px'>
-  </div>
-
+    if volumes:
+        issues_html = issue_cards if new_issues else "<p style='color:#777'>No new issues this run.</p>"
+        body_html = f"""
   <h3 style='border-bottom:2px solid #1a1a2e;padding-bottom:4px'>
     Updated Volumes ({len(volumes)})
   </h3>
@@ -100,11 +94,22 @@ def build_html(run_id, ingestion_date, volumes, new_issues, banner_url):
     </thead>
     <tbody>{volume_rows}</tbody>
   </table>
-
   <h3 style='border-bottom:2px solid #1a1a2e;padding-bottom:4px;margin-top:32px'>
     New Issues ({len(new_issues)})
   </h3>
-  <div>{issue_cards if new_issues else "<p style='color:#777'>No new issues this run.</p>"}</div>
+  <div>{issues_html}</div>"""
+    else:
+        body_html = "<p style='color:#777;font-size:16px'>No changes detected on this run.</p>"
+
+    return f"""<!DOCTYPE html>
+<html>
+<body style='font-family:Arial,sans-serif;color:#222;max-width:800px;margin:auto;padding:20px'>
+  <h2 style='color:#1a1a2e'>DC Absolute Pipeline — Run Complete</h2>
+  <p style='color:#555'>Run ID: <code>{run_id}</code> &nbsp;|&nbsp; Date: {ingestion_date}</p>
+  <div style='text-align:center;margin-bottom:16px'>
+    <img src='{banner_url}' alt='DC Absolute' style='max-width:100%;border-radius:6px'>
+  </div>
+  {body_html}
 </body>
 </html>"""
 
@@ -112,22 +117,25 @@ def build_html(run_id, ingestion_date, volumes, new_issues, banner_url):
 def lambda_handler(event, context):
     run_id = event["run_id"]
     ingestion_date = event["ingestion_date"]
-    volumes_key = event["volumes_key"]
-    issue_details_key = event["issue_details_key"]
 
-    volumes_data = read_json_from_s3(volumes_key)
-    volumes = volumes_data.get("volumes", [])
+    volumes_key = event.get("volumes_key")
+    issue_details_key = event.get("issue_details_key")
+    has_changes = event.get("changed_volume_count", 0) > 0
 
-    details_data = read_json_from_s3(issue_details_key)
-    all_details = details_data.get("issue_details", [])
-    new_issues = [d for d in all_details if d.get("change_reason") == "new_issue"]
+    volumes = []
+    if has_changes and volumes_key:
+        volumes = read_json_from_s3(volumes_key).get("volumes", [])
+
+    new_issues = []
+    if has_changes and issue_details_key:
+        all_details = read_json_from_s3(issue_details_key).get("issue_details", [])
+        new_issues = [d for d in all_details if d.get("change_reason") == "new_issue"]
 
     html_body = build_html(run_id, ingestion_date, volumes, new_issues, random_banner_url())
     text_body = (
         f"DC Absolute Pipeline complete.\n"
         f"Run: {run_id} | Date: {ingestion_date}\n"
-        f"Updated volumes: {len(volumes)}\n"
-        f"New issues: {len(new_issues)}"
+        + (f"Updated volumes: {len(volumes)}\nNew issues: {len(new_issues)}" if has_changes else "No changes detected.")
     )
 
     ses_client.send_email(
@@ -135,7 +143,11 @@ def lambda_handler(event, context):
         Destination={"ToAddresses": [SES_RECIPIENT]},
         Message={
             "Subject": {
-                "Data": f"[DC Absolute] Pipeline complete — {ingestion_date} ({len(new_issues)} new issues)",
+                "Data": (
+                    f"[DC Absolute] Pipeline complete — {ingestion_date} ({len(new_issues)} new issues)"
+                    if has_changes else
+                    f"[DC Absolute] No changes detected — {ingestion_date}"
+                ),
                 "Charset": "UTF-8",
             },
             "Body": {
