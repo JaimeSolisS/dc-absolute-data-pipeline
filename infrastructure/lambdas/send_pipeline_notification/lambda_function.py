@@ -29,18 +29,20 @@ import boto3
 s3_client = boto3.client("s3")
 ses_client = boto3.client("ses")
 
-BANNER_URLS = [
-    "https://github.com/JaimeSolisS/dc-absolute-data-pipeline/blob/master/img/banner.png?raw=true",
-    "https://github.com/JaimeSolisS/dc-absolute-data-pipeline/blob/master/img/banner2.png?raw=true",
-    "https://github.com/JaimeSolisS/dc-absolute-data-pipeline/blob/master/img/banner3.png?raw=true",
-    "https://github.com/JaimeSolisS/dc-absolute-data-pipeline/blob/master/img/banner4.png?raw=true",
-    "https://github.com/JaimeSolisS/dc-absolute-data-pipeline/blob/master/img/banner5.png?raw=true",
-    "https://github.com/JaimeSolisS/dc-absolute-data-pipeline/blob/master/img/banner6.png?raw=true",
-]
-
 BUCKET = os.environ["BUCKET_BRONZE"]
 SES_SENDER = os.environ["SES_SENDER"]
 SES_RECIPIENT = os.environ["SES_RECIPIENT"]
+ASSETS_BUCKET = os.environ["ASSETS_BUCKET"]
+
+BANNER_KEYS = [
+    "banners/banner.png", "banners/banner2.png", "banners/banner3.png",
+    "banners/banner4.png", "banners/banner5.png", "banners/banner6.png",
+]
+
+
+def random_banner_url():
+    key = random.choice(BANNER_KEYS)
+    return f"https://{ASSETS_BUCKET}.s3.amazonaws.com/{key}"
 
 
 def read_json_from_s3(key):
@@ -120,8 +122,7 @@ def lambda_handler(event, context):
     all_details = details_data.get("issue_details", [])
     new_issues = [d for d in all_details if d.get("change_reason") == "new_issue"]
 
-    banner_url = random.choice(BANNER_URLS)
-    html_body = build_html(run_id, ingestion_date, volumes, new_issues, banner_url)
+    html_body = build_html(run_id, ingestion_date, volumes, new_issues, random_banner_url())
     text_body = (
         f"DC Absolute Pipeline complete.\n"
         f"Run: {run_id} | Date: {ingestion_date}\n"

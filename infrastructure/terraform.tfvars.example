@@ -8,6 +8,7 @@ s3_silver_bucket              = "dc-absolute-data-pipeline-silver-<suffix>"
 s3_gold_bucket                = "dc-absolute-data-pipeline-gold-<suffix>"
 athena_query_results_bucket   = "dc-absolute-data-pipeline-athena-results-<suffix>"
 s3_control_bucket             = "dc-absolute-data-pipeline-control-<suffix>"
+s3_assets_bucket              = "dc-absolute-data-pipeline-assets-<suffix>"
 glue_scripts_bucket           = "dc-absolute-data-pipeline-glue-<suffix>"
 
 # Find the right ARN for your region at https://aws-sdk-pandas.readthedocs.io/en/stable/layers.html

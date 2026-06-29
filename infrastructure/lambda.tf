@@ -133,6 +133,7 @@ resource "aws_lambda_function" "send_pipeline_notification" {
       BUCKET_BRONZE  = var.s3_bronze_bucket
       SES_SENDER     = var.ses_sender_email
       SES_RECIPIENT  = var.ses_recipient_email
+      ASSETS_BUCKET  = var.s3_assets_bucket
     }
   }
 }

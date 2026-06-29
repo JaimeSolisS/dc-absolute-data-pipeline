@@ -35,6 +35,11 @@ variable "s3_control_bucket" {
   type        = string
 }
 
+variable "s3_assets_bucket" {
+  description = "S3 bucket for public static assets (banners, images)"
+  type        = string
+}
+
 variable "athena_query_results_bucket" {
   description = "S3 bucket for Athena query results"
   type        = string
