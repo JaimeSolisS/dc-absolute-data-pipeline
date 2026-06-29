@@ -112,6 +112,31 @@ resource "aws_lambda_function" "detect_changed_issues" {
   }
 }
 
+data "archive_file" "send_pipeline_notification" {
+  type        = "zip"
+  source_dir  = "${path.module}/lambdas/send_pipeline_notification"
+  output_path = "${path.module}/lambdas/zips/send_pipeline_notification.zip"
+}
+
+resource "aws_lambda_function" "send_pipeline_notification" {
+  function_name    = var.lambda_function_name_send_pipeline_notification
+  role             = aws_iam_role.lambda_exec.arn
+  runtime          = "python3.11"
+  handler          = "lambda_function.lambda_handler"
+  timeout          = 60
+  memory_size      = 256
+  filename         = data.archive_file.send_pipeline_notification.output_path
+  source_code_hash = data.archive_file.send_pipeline_notification.output_base64sha256
+
+  environment {
+    variables = {
+      BUCKET_BRONZE  = var.s3_bronze_bucket
+      SES_SENDER     = var.ses_sender_email
+      SES_RECIPIENT  = var.ses_recipient_email
+    }
+  }
+}
+
 data "archive_file" "fetch_changed_issues_details" {
   type        = "zip"
   source_dir  = "${path.module}/lambdas/fetch_changed_issues_details"

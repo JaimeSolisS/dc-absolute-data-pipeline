@@ -86,6 +86,11 @@ resource "aws_iam_role_policy" "lambda_s3" {
           "*"
         ]
       },
+      {
+        Effect   = "Allow"
+        Action   = ["ses:SendEmail", "ses:SendRawEmail"]
+        Resource = "*"
+      },
     ]
   })
 }

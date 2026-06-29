@@ -96,3 +96,18 @@ variable "glue_warehouse_path" {
   description = "S3 path used as the Iceberg warehouse root (e.g. s3://bucket/warehouse/)"
   type        = string
 }
+
+variable "lambda_function_name_send_pipeline_notification" {
+  description = "Name of the Lambda function that sends the SES pipeline notification"
+  type        = string
+}
+
+variable "ses_sender_email" {
+  description = "Verified SES email address used as the notification sender"
+  type        = string
+}
+
+variable "ses_recipient_email" {
+  description = "Email address that receives the pipeline run notification"
+  type        = string
+}

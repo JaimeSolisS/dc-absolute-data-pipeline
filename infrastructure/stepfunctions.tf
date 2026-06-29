@@ -27,6 +27,7 @@ resource "aws_iam_role_policy" "sfn_invoke_lambda" {
         "${aws_lambda_function.fetch_issues_for_changed_volumes.arn}:*",
         "${aws_lambda_function.detect_changed_issues.arn}:*",
         "${aws_lambda_function.fetch_changed_issues_details.arn}:*",
+        "${aws_lambda_function.send_pipeline_notification.arn}:*",
       ]
     }]
   })
@@ -62,5 +63,6 @@ resource "aws_sfn_state_machine" "absolute_data_pipeline" {
     detect_changed_issues_arn              = aws_lambda_function.detect_changed_issues.arn
     fetch_changed_issues_details_arn       = aws_lambda_function.fetch_changed_issues_details.arn
     glue_job_name                          = aws_glue_job.bronze_to_silver.name
+    send_pipeline_notification_arn         = aws_lambda_function.send_pipeline_notification.arn
   })
 }

@@ -131,6 +131,26 @@
                     "--issue_details_key": "{% $states.input.issue_details_key %}"
                 }
             },
+            "Output": "{% $states.input %}",
+            "Next": "Send Notification"
+        },
+        "Send Notification": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Output": "{% $states.result.Payload %}",
+            "Arguments": {
+                "Payload": "{% $states.input %}",
+                "FunctionName": "${send_pipeline_notification_arn}:$LATEST"
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2,
+                    "JitterStrategy": "FULL"
+                }
+            ],
             "End": true
         },
         "No Changes": {

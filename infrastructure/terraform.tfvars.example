@@ -24,3 +24,7 @@ step_function_name = "dc-absolute-pipeline"
 
 glue_job_name       = "dc-absolute-bronze-to-silver"
 glue_warehouse_path = "s3://dc-absolute-data-pipeline-silver-<suffix>/warehouse/"
+
+lambda_function_name_send_pipeline_notification = "dc-absolute-send-pipeline-notification"
+ses_sender_email    = "your-verified-sender@example.com"
+ses_recipient_email = "your-recipient@example.com"
