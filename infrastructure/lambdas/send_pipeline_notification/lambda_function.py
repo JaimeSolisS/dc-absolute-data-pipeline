@@ -23,10 +23,20 @@ Step Functions input (full pipeline state, forwarded from Bronze to Silver):
 
 import os
 import json
+import random
 import boto3
 
 s3_client = boto3.client("s3")
 ses_client = boto3.client("ses")
+
+BANNER_URLS = [
+    "https://github.com/JaimeSolisS/dc-absolute-data-pipeline/blob/master/img/banner.png?raw=true",
+    "https://github.com/JaimeSolisS/dc-absolute-data-pipeline/blob/master/img/banner2.png?raw=true",
+    "https://github.com/JaimeSolisS/dc-absolute-data-pipeline/blob/master/img/banner3.png?raw=true",
+    "https://github.com/JaimeSolisS/dc-absolute-data-pipeline/blob/master/img/banner4.png?raw=true",
+    "https://github.com/JaimeSolisS/dc-absolute-data-pipeline/blob/master/img/banner5.png?raw=true",
+    "https://github.com/JaimeSolisS/dc-absolute-data-pipeline/blob/master/img/banner6.png?raw=true",
+]
 
 BUCKET = os.environ["BUCKET_BRONZE"]
 SES_SENDER = os.environ["SES_SENDER"]
@@ -38,7 +48,7 @@ def read_json_from_s3(key):
     return json.loads(response["Body"].read().decode("utf-8"))
 
 
-def build_html(run_id, ingestion_date, volumes, new_issues):
+def build_html(run_id, ingestion_date, volumes, new_issues, banner_url):
     volume_rows = "".join(
         f"<tr><td style='padding:6px 12px;border-bottom:1px solid #eee'>{v['name']}</td>"
         f"<td style='padding:6px 12px;border-bottom:1px solid #eee;text-align:center'>{v['count_of_issues']}</td></tr>"
@@ -72,6 +82,9 @@ def build_html(run_id, ingestion_date, volumes, new_issues):
 <body style='font-family:Arial,sans-serif;color:#222;max-width:800px;margin:auto;padding:20px'>
   <h2 style='color:#1a1a2e'>DC Absolute Pipeline — Run Complete</h2>
   <p style='color:#555'>Run ID: <code>{run_id}</code> &nbsp;|&nbsp; Date: {ingestion_date}</p>
+  <div style='text-align:center;margin-bottom:16px'>
+    <img src='{banner_url}' alt='DC Absolute' style='max-width:100%;border-radius:6px'>
+  </div>
 
   <h3 style='border-bottom:2px solid #1a1a2e;padding-bottom:4px'>
     Updated Volumes ({len(volumes)})
@@ -107,7 +120,8 @@ def lambda_handler(event, context):
     all_details = details_data.get("issue_details", [])
     new_issues = [d for d in all_details if d.get("change_reason") == "new_issue"]
 
-    html_body = build_html(run_id, ingestion_date, volumes, new_issues)
+    banner_url = random.choice(BANNER_URLS)
+    html_body = build_html(run_id, ingestion_date, volumes, new_issues, banner_url)
     text_body = (
         f"DC Absolute Pipeline complete.\n"
         f"Run: {run_id} | Date: {ingestion_date}\n"
