@@ -27,8 +27,8 @@ ComicVine API
      │
      ├─► Bronze to Silver       Glue job — transforms raw JSON into Iceberg tables
      │
-     └─► Send Notification      Lambda — sends an SES email digest with updated
-                                volumes and new issues (cover image + store date)
+     └─► Send Notification      Lambda — sends an SES email digest on every run;
+                                content adapts to what changed (or "no changes")
 ```
 
 ### S3 layers
@@ -64,10 +64,13 @@ Reads the three bronze files written by the current run and upserts into Iceberg
 
 ### SES notification
 
-After each successful Glue run the `send_pipeline_notification` Lambda sends an HTML email containing:
+The `send_pipeline_notification` Lambda runs at the end of every execution — including early exits — and sends an HTML email with a random banner from the assets bucket. The content adapts to what actually happened:
 
-- **Updated Volumes** — table of every volume processed in the run, with its current issue count
-- **New Issues** — card grid for each issue added for the first time, showing cover image, volume name, issue number, issue title, and store date
+| Scenario | Email content |
+| -------- | ------------- |
+| No changed volumes | "No changes detected this run." |
+| Changed volumes, no new issues | Updated Volumes table |
+| Changed volumes + new issues | Updated Volumes table + New Issues card grid (cover image, volume name, issue number, title, store date) |
 
 Both the sender and recipient addresses must be verified in SES (or the account must be out of sandbox mode for the recipient).
 
@@ -99,6 +102,7 @@ Edit `terraform.tfvars` — the required values are:
 | `athena_query_results_bucket`                     | Globally unique S3 bucket name for Athena results                                                                         |
 | `glue_warehouse_path`                             | S3 path for the Iceberg warehouse root (e.g. `s3://your-silver-bucket/warehouse/`)                                        |
 | `aws_wrangler_layer_arn`                          | ARN of the [AWS SDK for pandas Lambda layer](https://aws-sdk-pandas.readthedocs.io/en/stable/layers.html) for your region |
+| `s3_assets_bucket`                                | Globally unique S3 bucket name for public static assets (banner images)                                                   |
 | `ses_sender_email`                                | Verified SES email address used as the notification sender                                                                |
 | `ses_recipient_email`                             | Email address that receives the pipeline run notification                                                                 |
 | `lambda_function_name_send_pipeline_notification` | Name for the notification Lambda function                                                                                 |
